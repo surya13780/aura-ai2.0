@@ -3,80 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Aura • 3D AI Companion</title>
+  <title>Aura • 3D AI Companion with Mood Detection</title>
   
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-  <!-- Three.js Library for Real 3D Background -->
+  <!-- 3D Engine & Face AI Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
     body { background-color: #080811; color: #ffffff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
-    /* 3D Canvas Background */
+    /* 3D Background Canvas */
     #bg3d { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; }
 
-    /* UI Layout Wrapper */
+    /* Container */
     .app-container { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; width: 100%; }
 
-    /* Glassmorphism Header */
-    .header { background: rgba(18, 18, 35, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+    /* Glass Header */
+    .header { background: rgba(18, 18, 35, 0.65); backdrop-filter: blur(16px); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
     .user-info { display: flex; align-items: center; gap: 12px; }
-    .avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); border: 2px solid rgba(255, 255, 255, 0.2); }
-    .persona-select { background: rgba(15, 15, 26, 0.8); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; outline: none; cursor: pointer; transition: 0.3s ease; }
-    .persona-select:hover { border-color: #c084fc; box-shadow: 0 0 10px rgba(192, 132, 252, 0.3); }
+    .avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+    
+    /* Camera & Mood Badge */
+    .mood-box { background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+    .cam-btn { background: #8b5cf6; color: #fff; border: none; padding: 6px 12px; border-radius: 12px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
 
-    /* Toast Notification Banner (Always Informs You) */
-    .toast-banner { position: absolute; top: 75px; left: 50%; transform: translateX(-50%); background: rgba(139, 92, 246, 0.25); border: 1px solid rgba(139, 92, 246, 0.5); backdrop-filter: blur(10px); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; z-index: 10; display: flex; align-items: center; gap: 8px; box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
+    /* Toast Notification Banner */
+    .toast-banner { position: absolute; top: 75px; left: 50%; transform: translateX(-50%); background: rgba(139, 92, 246, 0.3); border: 1px solid rgba(139, 92, 246, 0.5); backdrop-filter: blur(10px); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.3s ease; z-index: 10; }
     .toast-banner.show { opacity: 1; transform: translateX(-50%) translateY(5px); }
 
     /* Chat Area */
-    .chat-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
-    .message { max-width: 80%; padding: 14px 18px; border-radius: 22px; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; animation: fadeIn 0.3s cubic-bezier(0.1, 1, 0.1, 1); }
+    .chat-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+    .message { max-width: 80%; padding: 14px 18px; border-radius: 22px; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    .message.ai { background: rgba(28, 28, 52, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); align-self: flex-start; border-bottom-left-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
-    .message.user { background: linear-gradient(135deg, #7c3aed, #db2777); align-self: flex-end; border-bottom-right-radius: 6px; box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4); }
+    .message.ai { background: rgba(28, 28, 52, 0.7); backdrop-filter: blur(12px); align-self: flex-start; border-bottom-left-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); }
+    .message.user { background: linear-gradient(135deg, #7c3aed, #db2777); align-self: flex-end; border-bottom-right-radius: 6px; }
 
-    /* Input Controls */
-    .input-container { background: rgba(18, 18, 35, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 14px 20px; display: flex; gap: 10px; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); }
-    .input-container input { flex: 1; background: rgba(10, 10, 20, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); padding: 14px 20px; border-radius: 30px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.3s ease; }
-    .input-container input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
-    .send-btn { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; border: none; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: 0.3s ease; box-shadow: 0 0 15px rgba(139, 92, 246, 0.4); }
-    .send-btn:hover { transform: scale(1.05); }
+    /* Hidden Camera Frame */
+    #webcam { display: none; }
 
-    /* Custom Scrollbar */
-    .chat-container::-webkit-scrollbar { width: 6px; }
-    .chat-container::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+    /* Input Box */
+    .input-container { background: rgba(18, 18, 35, 0.65); backdrop-filter: blur(16px); padding: 14px 20px; display: flex; gap: 10px; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .input-container input { flex: 1; background: rgba(10, 10, 20, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); padding: 14px 20px; border-radius: 30px; color: #fff; font-size: 0.95rem; outline: none; }
+    .send-btn { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; border: none; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <!-- 3D Particle Canvas Background -->
+  <!-- 3D Canvas -->
   <canvas id="bg3d"></canvas>
+  <video id="webcam" autoplay muted playsinline width="320" height="240"></video>
 
   <div class="app-container">
-    <!-- Status Toast Informing You of Events -->
-    <div class="toast-banner" id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">System Ready</span></div>
+    <div class="toast-banner" id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">System Online</span></div>
 
     <div class="header">
       <div class="user-info">
         <div class="avatar">✨</div>
-        <select class="persona-select" id="personaSelect" onchange="changePersonality()">
-          <option value="friend">💬 Best Friend</option>
-          <option value="mentor">🔥 Strict Mentor</option>
-          <option value="fitness">💪 Health Coach</option>
-          <option value="tutor">📚 Tutor</option>
-        </select>
+        <button class="cam-btn" onclick="startCamera()"><i class="fa-solid fa-camera"></i> Scan Mood</button>
+      </div>
+      <div class="mood-box" id="moodStatus">
+        <i class="fa-solid fa-face-smile"></i> Mood: <span id="currentMood">Neutral</span>
       </div>
     </div>
 
     <div class="chat-container" id="chatBox">
       <div class="message ai">
-        Greetings! 👋 I am Aura, your classic AI companion. I'm connected and ready to assist you!
+        Hey! 👋 I'm Aura. Tap 'Scan Mood' to let me read your expression, or just speak to me!
       </div>
     </div>
 
@@ -90,16 +88,8 @@
     // 🔑 PASTE YOUR FREE GROQ API KEY HERE:
     const GROQ_API_KEY = "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";
 
-    const personas = {
-      friend: "You are Aura, a warm best friend. Speak casually with emojis in 1-2 friendly sentences.",
-      mentor: "You are Aura, a strict mentor. Be direct and push the user towards their goals in 1-2 sentences.",
-      fitness: "You are Aura, a high-energy fitness coach. Give motivating workout tips in 1-2 sentences.",
-      tutor: "You are Aura, an intelligent tutor. Explain concepts clearly and concisely in 1-2 sentences."
-    };
+    let detectedMood = "neutral";
 
-    let systemPrompt = personas.friend;
-
-    // Toast Notification Function (Always Informs You)
     function informUser(msg) {
       const toast = document.getElementById('toast');
       document.getElementById('toastMsg').innerText = msg;
@@ -107,11 +97,48 @@
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    function changePersonality() {
-      const selected = document.getElementById('personaSelect').value;
-      systemPrompt = personas[selected];
-      informUser(`Mode changed to: ${selected.toUpperCase()}`);
-      addAiMessage(`Switched persona mode! How can I help you now?`);
+    // Voice Engine (AI Speaks out loud)
+    function speakOutLoud(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Stop old audio
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // Camera & Emotion Detection
+    async function startCamera() {
+      informUser("Loading Face Detection AI...");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+        
+        informUser("Downloading emotion models...");
+        await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
+        await faceapi.nets.faceExpressionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
+
+        informUser("Camera Active! Reading your face...");
+        
+        setInterval(async () => {
+          const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+          if (detections && detections.expressions) {
+            const expressions = detections.expressions;
+            let highest = "neutral";
+            let maxProb = 0;
+            for (const [expr, prob] of Object.entries(expressions)) {
+              if (prob > maxProb) { maxProb = prob; highest = expr; }
+            }
+            detectedMood = highest;
+            document.getElementById('currentMood').innerText = highest.toUpperCase();
+          }
+        }, 2000);
+
+      } catch (err) {
+        informUser("Camera permission denied!");
+      }
     }
 
     async function sendMessage() {
@@ -121,23 +148,23 @@
 
       const chatBox = document.getElementById('chatBox');
       
-      // User Message
       const uDiv = document.createElement('div');
       uDiv.className = 'message user';
       uDiv.innerText = text;
       chatBox.appendChild(uDiv);
       input.value = '';
 
-      // Typing Indicator + Inform User
-      informUser("Aura is processing response...");
+      informUser("Aura thinking...");
       const tDiv = document.createElement('div');
       tDiv.className = 'message ai';
       tDiv.id = 'typing';
-      tDiv.innerText = "Aura is thinking...";
+      tDiv.innerText = "Aura is typing...";
       chatBox.appendChild(tDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
+        const systemInstruction = `You are Aura, an energetic AI companion. The user's face camera detects their mood is currently: "${detectedMood}". Respond in 1-2 motivating sentences. If they sound lazy, explicitly order them: "Get up right now, let's achieve our goals!"`;
+
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -147,7 +174,7 @@
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
             messages: [
-              { role: "system", content: systemPrompt },
+              { role: "system", content: systemInstruction },
               { role: "user", content: text }
             ]
           })
@@ -157,17 +184,17 @@
         document.getElementById('typing').remove();
 
         if (data.choices && data.choices[0]) {
-          addAiMessage(data.choices[0].message.content);
-          informUser("Response received!");
+          const aiReply = data.choices[0].message.content;
+          addAiMessage(aiReply);
+          speakOutLoud(aiReply); // 🔊 SPEAKS OUT LOUD
+          informUser("Aura Responded!");
         } else {
-          addAiMessage("API Key missing or invalid. Please add your Groq API Key to index.html.");
-          informUser("API Key error!");
+          addAiMessage("Check your Groq API key in index.html!");
         }
 
       } catch (err) {
         document.getElementById('typing').remove();
-        addAiMessage("Unable to establish connection. Please check your API key in index.html.");
-        informUser("Connection failed!");
+        addAiMessage("Connection error. Check index.html API key!");
       }
     }
 
@@ -189,8 +216,7 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
-    // Particles Geometry
-    const particleCount = 700;
+    const particleCount = 600;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -199,29 +225,19 @@
       positions[i] = (Math.random() - 0.5) * 10;
       positions[i + 1] = (Math.random() - 0.5) * 10;
       positions[i + 2] = (Math.random() - 0.5) * 10;
-
-      // Classic glowing colors (Purple / Pink / Blue)
-      colors[i] = Math.random() * 0.5 + 0.5; // Red
-      colors[i + 1] = Math.random() * 0.2;     // Green
-      colors[i + 2] = Math.random() * 0.8 + 0.2; // Blue
+      colors[i] = Math.random() * 0.5 + 0.5;
+      colors[i + 1] = Math.random() * 0.2;
+      colors[i + 2] = Math.random() * 0.8 + 0.2;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    const material = new THREE.PointsMaterial({
-      size: 0.04,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.8
-    });
-
+    const material = new THREE.PointsMaterial({ size: 0.04, vertexColors: true, transparent: true, opacity: 0.8 });
     const particleSystem = new THREE.Points(geometry, material);
     scene.add(particleSystem);
-
     camera.position.z = 3;
 
-    // Smooth Animation Loop
     function animate() {
       requestAnimationFrame(animate);
       particleSystem.rotation.x += 0.0008;
@@ -230,7 +246,6 @@
     }
     animate();
 
-    // Window Resize Handling
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
