@@ -279,7 +279,7 @@
       const text = input.value.trim();
       if (!text && !base64Image) return;
 
-      if (GROQ_API_KEY.includes("PASTE_YOUR_GROQ_API_KEY")) {
+      if (GROQ_API_KEY.includes("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")) {
         addErrorMessage("⚠️ Error: You forgot to replace PASTE_YOUR_GROQ_API_KEY_HERE with your real key in index.html!");
         return;
       }
@@ -325,7 +325,7 @@
 
         if (currentImg) {
           payload = {
-            model: "llama-3.2-11b-vision-instruct",
+            model: "llama-3.2-90b-vision-preview",
             messages: [
               {
                 role: "system",
