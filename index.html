@@ -64,7 +64,7 @@
     .message.ai {
       background: rgba(28, 28, 56, 0.8); backdrop-filter: blur(14px);
       align-self: flex-start; border-bottom-left-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.12); color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.12); color: #fff; white-space: pre-wrap;
     }
     .message.user {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
@@ -75,6 +75,7 @@
       background: rgba(239, 68, 68, 0.25); border: 1px solid #ef4444; color: #fca5a5;
       align-self: center; font-size: 0.8rem; max-width: 90%;
     }
+    .message-img { max-width: 100%; max-height: 180px; border-radius: 12px; margin-bottom: 8px; display: block; }
 
     .quick-launch { display: flex; gap: 8px; margin-bottom: 8px; justify-content: center; }
     .chip-btn {
@@ -93,6 +94,11 @@
       padding: 12px 18px; border-radius: 30px; color: #fff; font-size: 0.9rem; outline: none;
     }
 
+    .image-preview-badge {
+      display: none; align-items: center; gap: 6px; background: rgba(168,85,247,0.3);
+      padding: 4px 10px; border-radius: 14px; font-size: 0.75rem; border: 1px solid #a855f7;
+    }
+
     .control-btn {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
       color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%;
@@ -100,6 +106,8 @@
     }
     .control-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+    #imageInput { display: none; }
   </style>
 </head>
 <body>
@@ -123,7 +131,7 @@
 
     <div class="chat-container" id="chatBox">
       <div class="message ai">
-        Hey bestie! 💕 Ready to chat! Talk to me via mic 🎙️ or ask me anything!
+        Hey bestie! 💕 Ready to chat! Upload photos 📸, talk via mic 🎙️, or ask me to solve math problems!
       </div>
     </div>
 
@@ -133,7 +141,18 @@
     </div>
 
     <div class="input-container">
+      <div class="image-preview-badge" id="imgBadge">
+        <i class="fa-solid fa-image"></i> Photo Ready
+        <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="clearImage()"></i>
+      </div>
+      
+      <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)" />
+      <button class="control-btn" style="background: rgba(255,255,255,0.15);" onclick="document.getElementById('imageInput').click()">
+        <i class="fa-solid fa-paperclip"></i>
+      </button>
+
       <button class="control-btn" id="micBtn" onclick="toggleVoiceInput()"><i class="fa-solid fa-microphone"></i></button>
+      
       <input type="text" id="userInput" placeholder="Message Aura..." onkeypress="if(event.key==='Enter') sendMessage()" />
       <button class="control-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
@@ -144,6 +163,7 @@
     const GROQ_API_KEY = "Gsk_OZJqxwTDQpgmwvHYAWfyWGdyb3FYsx3ss9O8AE6nf4OcnpisEXqU";
 
     let detectedMood = "neutral";
+    let base64Image = null;
     let isCamActive = false;
     let faceDetectionInterval = null;
 
@@ -170,6 +190,25 @@
       } else if (appName === 'whatsapp') {
         window.open("https://web.whatsapp.com", "_blank") || (window.location.href = "https://web.whatsapp.com");
       }
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        base64Image = evt.target.result;
+        document.getElementById('imgBadge').style.display = 'flex';
+        informUser("Photo attached!");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      base64Image = null;
+      document.getElementById('imageInput').value = '';
+      document.getElementById('imgBadge').style.display = 'none';
     }
 
     async function toggleCamera() {
@@ -219,10 +258,14 @@
 
     function toggleVoiceInput() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return informUser("Voice not supported on browser");
+      if (!SpeechRecognition) return informUser("Use Chrome on Android for Voice!");
 
       const micBtn = document.getElementById('micBtn');
       const rec = new SpeechRecognition();
+
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = 'en-US';
 
       rec.onstart = () => { micBtn.classList.add('listening'); informUser("Listening..."); };
       rec.onresult = (e) => {
@@ -230,11 +273,15 @@
         micBtn.classList.remove('listening');
         sendMessage();
       };
-      rec.onerror = () => micBtn.classList.remove('listening');
+      rec.onerror = (e) => {
+        micBtn.classList.remove('listening');
+        informUser("Mic error: " + e.error);
+      };
       rec.onend = () => micBtn.classList.remove('listening');
       rec.start();
     }
-async function sendMessage() {
+
+    async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
       if (!text && !base64Image) return;
@@ -271,18 +318,17 @@ async function sendMessage() {
       const tDiv = document.createElement('div');
       tDiv.className = 'message ai';
       tDiv.id = 'typing';
-      tDiv.innerText = "Aura reading image...";
+      tDiv.innerText = currentImg ? "Aura analyzing photo..." : "Aura thinking...";
       chatBox.appendChild(tDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        // Construct multimodal user content
         const userContent = [];
         
         if (text) {
           userContent.push({ type: "text", text: text });
         } else {
-          userContent.push({ type: "text", text: "Please analyze and solve this image." });
+          userContent.push({ type: "text", text: "Please analyze and solve this image clearly step-by-step." });
         }
 
         if (currentImg) {
@@ -303,7 +349,7 @@ async function sendMessage() {
             messages: [
               {
                 role: "system",
-                content: `You are Aura, a friendly, smart assistant. User mood: ${detectedMood}. Solve math problems clearly step-by-step!`
+                content: `You are Aura, an enthusiastic, warm, witty best friend AI. User mood: ${detectedMood}. Solve math problems clearly step-by-step with formulas and clear final answers!`
               },
               {
                 role: "user",
@@ -327,7 +373,7 @@ async function sendMessage() {
 
       } catch (err) {
         if (document.getElementById('typing')) document.getElementById('typing').remove();
-        addErrorMessage("Network error! Please try sending again.");
+        addErrorMessage("Network connection error! Please try again.");
       }
     }
 
