@@ -64,7 +64,7 @@
     .message.ai {
       background: rgba(28, 28, 56, 0.8); backdrop-filter: blur(14px);
       align-self: flex-start; border-bottom-left-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.12); color: #fff; white-space: pre-wrap;
+      border: 1px solid rgba(255, 255, 255, 0.12); color: #fff;
     }
     .message.user {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
@@ -75,7 +75,6 @@
       background: rgba(239, 68, 68, 0.25); border: 1px solid #ef4444; color: #fca5a5;
       align-self: center; font-size: 0.8rem; max-width: 90%;
     }
-    .message-img { max-width: 100%; max-height: 220px; border-radius: 12px; margin-bottom: 8px; display: block; object-fit: contain; }
 
     .quick-launch { display: flex; gap: 8px; margin-bottom: 8px; justify-content: center; }
     .chip-btn {
@@ -94,20 +93,13 @@
       padding: 12px 18px; border-radius: 30px; color: #fff; font-size: 0.9rem; outline: none;
     }
 
-    .image-preview-badge {
-      display: none; align-items: center; gap: 6px; background: rgba(168,85,247,0.3);
-      padding: 4px 10px; border-radius: 14px; font-size: 0.75rem; border: 1px solid #a855f7;
-    }
-
     .control-btn {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
       color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s;
     }
     .control-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-
-    #imageInput { display: none; }
   </style>
 </head>
 <body>
@@ -131,7 +123,7 @@
 
     <div class="chat-container" id="chatBox">
       <div class="message ai">
-        Hey bestie! 💕 I'm ready! Upload any math photo 📸, talk via mic 🎙️, or send me any question!
+        Hey bestie! 💕 Ready to chat! Talk to me via mic 🎙️ or ask me anything!
       </div>
     </div>
 
@@ -141,18 +133,7 @@
     </div>
 
     <div class="input-container">
-      <div class="image-preview-badge" id="imgBadge">
-        <i class="fa-solid fa-image"></i> Photo
-        <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="clearImage()"></i>
-      </div>
-      
-      <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)" />
-      <button class="control-btn" style="background: rgba(255,255,255,0.15);" onclick="document.getElementById('imageInput').click()">
-        <i class="fa-solid fa-paperclip"></i>
-      </button>
-
       <button class="control-btn" id="micBtn" onclick="toggleVoiceInput()"><i class="fa-solid fa-microphone"></i></button>
-      
       <input type="text" id="userInput" placeholder="Message Aura..." onkeypress="if(event.key==='Enter') sendMessage()" />
       <button class="control-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
@@ -160,11 +141,9 @@
 
   <script>
     // 🔑 GROQ API KEY
-    const GROQ_API_KEY = "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";
+    const GROQ_API_KEY = "Gsk_OZJqxwTDQpgmwvHYAWfyWGdyb3FYsx3ss9O8AE6nf4OcnpisEXqU";
 
     let detectedMood = "neutral";
-    let base64Image = null;
-    let base64Mime = "image/jpeg";
     let isCamActive = false;
     let faceDetectionInterval = null;
 
@@ -178,8 +157,7 @@
     function speakOutLoud(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const cleanText = text.replace(/[*#_~`]/g, '');
-        const utterance = new SpeechSynthesisUtterance(cleanText);
+        const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
         utterance.pitch = 1.15;
         window.speechSynthesis.speak(utterance);
@@ -192,26 +170,6 @@
       } else if (appName === 'whatsapp') {
         window.open("https://web.whatsapp.com", "_blank") || (window.location.href = "https://web.whatsapp.com");
       }
-    }
-
-    function handleImageUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      base64Mime = file.type || "image/jpeg";
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        base64Image = evt.target.result;
-        document.getElementById('imgBadge').style.display = 'flex';
-        informUser("Photo attached!");
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function clearImage() {
-      base64Image = null;
-      document.getElementById('imageInput').value = '';
-      document.getElementById('imgBadge').style.display = 'none';
     }
 
     async function toggleCamera() {
@@ -261,14 +219,10 @@
 
     function toggleVoiceInput() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return informUser("Use Google Chrome for Voice");
+      if (!SpeechRecognition) return informUser("Voice not supported on browser");
 
       const micBtn = document.getElementById('micBtn');
       const rec = new SpeechRecognition();
-
-      rec.continuous = false;
-      rec.interimResults = false;
-      rec.lang = 'en-US';
 
       rec.onstart = () => { micBtn.classList.add('listening'); informUser("Listening..."); };
       rec.onresult = (e) => {
@@ -276,10 +230,7 @@
         micBtn.classList.remove('listening');
         sendMessage();
       };
-      rec.onerror = (e) => {
-        micBtn.classList.remove('listening');
-        informUser("Mic error: " + e.error);
-      };
+      rec.onerror = () => micBtn.classList.remove('listening');
       rec.onend = () => micBtn.classList.remove('listening');
       rec.start();
     }
@@ -287,31 +238,15 @@
     async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
-      
-      if (!text && !base64Image) return;
+      if (!text) return;
 
       const chatBox = document.getElementById('chatBox');
       
       const uDiv = document.createElement('div');
       uDiv.className = 'message user';
-      
-      if (base64Image) {
-        const imgEl = document.createElement('img');
-        imgEl.src = base64Image;
-        imgEl.className = 'message-img';
-        uDiv.appendChild(imgEl);
-      }
-      
-      if (text) {
-        const txtEl = document.createElement('span');
-        txtEl.innerText = text;
-        uDiv.appendChild(txtEl);
-      }
-      
+      uDiv.innerText = text;
       chatBox.appendChild(uDiv);
 
-      const currentImg = base64Image;
-      clearImage();
       input.value = '';
 
       const lower = text.toLowerCase();
@@ -322,26 +257,11 @@
       const tDiv = document.createElement('div');
       tDiv.className = 'message ai';
       tDiv.id = 'typing';
-      tDiv.innerText = currentImg ? "Aura reading image & solving..." : "Aura thinking...";
+      tDiv.innerText = "Aura thinking...";
       chatBox.appendChild(tDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const userContent = [];
-        
-        if (text) {
-          userContent.push({ type: "text", text: text });
-        } else {
-          userContent.push({ type: "text", text: "Please read, analyze, and solve the problem in this image clearly step-by-step." });
-        }
-
-        if (currentImg) {
-          userContent.push({
-            type: "image_url",
-            image_url: { url: currentImg }
-          });
-        }
-
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -349,15 +269,15 @@
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "llama-3.2-11b-vision-preview",
+            model: "llama-3.3-70b-versatile",
             messages: [
               {
                 role: "system",
-                content: `You are Aura, a witty, brilliant best friend AI and expert tutor. User mood: ${detectedMood}. Solve any handwritten or printed math problems with clear formulas, step-by-step calculations, and a highlighted final answer!`
+                content: `You are Aura, an enthusiastic, warm, witty best friend AI. User mood: ${detectedMood}. Keep answers short, fun, and concise with emojis!`
               },
               {
                 role: "user",
-                content: userContent
+                content: text
               }
             ]
           })
@@ -366,7 +286,7 @@
         const data = await response.json();
         if (document.getElementById('typing')) document.getElementById('typing').remove();
 
-        if (response.ok && data.choices && data.choices[0] && data.choices[0].message) {
+        if (response.ok && data.choices && data.choices[0].message.content) {
           const aiReply = data.choices[0].message.content;
           addAiMessage(aiReply);
           speakOutLoud(aiReply);
@@ -377,7 +297,7 @@
 
       } catch (err) {
         if (document.getElementById('typing')) document.getElementById('typing').remove();
-        addErrorMessage("Network connection error! Please check your internet connection.");
+        addErrorMessage("Network connection error! Check your internet connection.");
       }
     }
 
