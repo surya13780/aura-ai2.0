@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Aura • Advanced Vision & Bestie AI</title>
+  <title>Aura • Bestie AI</title>
   
-  <!-- Fonts & FontAwesome -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-  <!-- 3D Engine & Face Detector -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
@@ -20,7 +18,6 @@
     #bg3d { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; }
     .app-container { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; max-width: 850px; margin: 0 auto; width: 100%; padding: 12px; }
 
-    /* Modern Glass Header */
     .header {
       background: rgba(18, 18, 38, 0.75); backdrop-filter: blur(20px);
       padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
@@ -44,21 +41,14 @@
       border: none; color: #fff; padding: 7px 14px; border-radius: 16px;
       font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 6px;
     }
-    .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
 
-    /* Live Face Scan Floating Container */
     .cam-preview-box {
-      position: absolute; top: 75px; right: 16px; width: 130px; height: 100px;
+      position: absolute; top: 75px; right: 16px; width: 120px; height: 90px;
       border-radius: 16px; overflow: hidden; border: 2px solid #a855f7;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6); display: none; z-index: 20; background: #000;
     }
     .cam-preview-box video { width: 100%; height: 100%; object-fit: cover; }
-    .cam-preview-box .cam-label {
-      position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7);
-      font-size: 0.6rem; text-align: center; padding: 2px 0; color: #a855f7; font-weight: 700;
-    }
 
-    /* Toast Banner */
     .toast-banner {
       position: absolute; top: 75px; left: 50%; transform: translateX(-50%);
       background: rgba(168, 85, 247, 0.35); border: 1px solid #a855f7;
@@ -67,7 +57,6 @@
     }
     .toast-banner.show { opacity: 1; transform: translateX(-50%) translateY(5px); }
 
-    /* Chat Messages Display */
     .chat-container { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
     .message { max-width: 82%; padding: 14px 18px; border-radius: 20px; font-size: 0.93rem; line-height: 1.5; word-wrap: break-word; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -82,9 +71,12 @@
       align-self: flex-end; border-bottom-right-radius: 4px;
       box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35);
     }
-    .message-img { max-width: 100%; max-height: 200px; border-radius: 12px; margin-bottom: 8px; display: block; border: 1px solid rgba(255,255,255,0.2); }
+    .message.error {
+      background: rgba(239, 68, 68, 0.25); border: 1px solid #ef4444; color: #fca5a5;
+      align-self: center; font-size: 0.8rem; max-width: 90%;
+    }
+    .message-img { max-width: 100%; max-height: 180px; border-radius: 12px; margin-bottom: 8px; display: block; }
 
-    /* Quick Launch Bar */
     .quick-launch { display: flex; gap: 8px; margin-bottom: 8px; justify-content: center; }
     .chip-btn {
       background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
@@ -92,7 +84,6 @@
     }
     .chip-btn:hover { background: rgba(168, 85, 247, 0.3); border-color: #a855f7; }
 
-    /* Input Bar & Controls */
     .input-container {
       background: rgba(22, 22, 45, 0.8); backdrop-filter: blur(18px);
       padding: 10px 16px; display: flex; gap: 8px; align-items: center;
@@ -113,7 +104,6 @@
       color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s;
     }
-    .control-btn:hover { transform: scale(1.05); }
     .control-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
@@ -126,35 +116,33 @@
 
   <div class="cam-preview-box" id="camBox">
     <video id="webcam" autoplay muted playsinline></video>
-    <div class="cam-label">LIVE MOOD AI</div>
   </div>
 
   <div class="app-container">
-    <div class="toast-banner" id="toast"><i class="fa-solid fa-sparkles"></i> <span id="toastMsg">Aura Advanced Ready</span></div>
+    <div class="toast-banner" id="toast"><i class="fa-solid fa-sparkles"></i> <span id="toastMsg">Aura Online</span></div>
 
     <div class="header">
-      <div class="brand-title">✨ Aura • Vision & Bestie AI</div>
+      <div class="brand-title">✨ Aura Bestie AI</div>
       <div class="action-group">
-        <button class="btn-action" onclick="toggleCamera()"><i class="fa-solid fa-video"></i> <span id="camBtnText">Face Scan</span></button>
-        <div class="status-badge" id="currentMood">Scanning Off 😴</div>
+        <button class="btn-action" onclick="toggleCamera()"><i class="fa-solid fa-video"></i> <span id="camBtnText">Scan Face</span></button>
+        <div class="status-badge" id="currentMood">Scanning Off</div>
       </div>
     </div>
 
     <div class="chat-container" id="chatBox">
       <div class="message ai">
-        Hey bestie! 💕 I'm upgraded! You can now <b>upload photos 📸</b> for me to look at, speak to me with your voice, or launch YouTube & WhatsApp below!
+        Hey bestie! 💕 Ready to chat! You can upload photos 📸, talk via mic 🎙️, or ask me anything!
       </div>
     </div>
 
     <div class="quick-launch">
-      <button class="chip-btn" onclick="launchApp('youtube')"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Open YouTube</button>
-      <button class="chip-btn" onclick="launchApp('whatsapp')"><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> Open WhatsApp</button>
-      <button class="chip-btn" onclick="triggerCheckIn()"><i class="fa-solid fa-bell"></i> Check Schedule</button>
+      <button class="chip-btn" onclick="launchApp('youtube')"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> YouTube</button>
+      <button class="chip-btn" onclick="launchApp('whatsapp')"><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> WhatsApp</button>
     </div>
 
     <div class="input-container">
       <div class="image-preview-badge" id="imgBadge">
-        <i class="fa-solid fa-image"></i> Image Attached
+        <i class="fa-solid fa-image"></i> Photo Ready
         <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="clearImage()"></i>
       </div>
       
@@ -165,17 +153,16 @@
 
       <button class="control-btn" id="micBtn" onclick="toggleVoiceInput()"><i class="fa-solid fa-microphone"></i></button>
       
-      <input type="text" id="userInput" placeholder="Talk or ask about an image..." onkeypress="if(event.key==='Enter') sendMessage()" />
+      <input type="text" id="userInput" placeholder="Message Aura..." onkeypress="if(event.key==='Enter') sendMessage()" />
       <button class="control-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
   </div>
 
   <script>
-    // 🔑 PASTE YOUR FREE GROQ API KEY HERE:
+    // 🔑 REPLACE WITH YOUR ACTUAL GROQ API KEY:
     const GROQ_API_KEY = "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";
 
     let detectedMood = "neutral";
-    let storedRoutine = localStorage.getItem('aura_routine') || "No schedule set yet.";
     let base64Image = null;
     let isCamActive = false;
     let faceDetectionInterval = null;
@@ -197,22 +184,14 @@
       }
     }
 
-    // Direct Launcher Fix for YouTube / WhatsApp
     function launchApp(appName) {
       if (appName === 'youtube') {
-        informUser("Opening YouTube...");
-        speakOutLoud("Opening YouTube for you, bestie!");
-        const win = window.open("https://www.youtube.com", "_blank");
-        if (!win) window.location.href = "https://www.youtube.com";
+        window.open("https://www.youtube.com", "_blank") || (window.location.href = "https://www.youtube.com");
       } else if (appName === 'whatsapp') {
-        informUser("Opening WhatsApp...");
-        speakOutLoud("Opening WhatsApp Web!");
-        const win = window.open("https://web.whatsapp.com", "_blank");
-        if (!win) window.location.href = "https://web.whatsapp.com";
+        window.open("https://web.whatsapp.com", "_blank") || (window.location.href = "https://web.whatsapp.com");
       }
     }
 
-    // Image Upload Handling
     function handleImageUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -221,7 +200,7 @@
       reader.onload = function(evt) {
         base64Image = evt.target.result;
         document.getElementById('imgBadge').style.display = 'flex';
-        informUser("Image attached! Type a question about it.");
+        informUser("Photo attached!");
       };
       reader.readAsDataURL(file);
     }
@@ -232,7 +211,6 @@
       document.getElementById('imgBadge').style.display = 'none';
     }
 
-    // Advanced Face Detection Engine
     async function toggleCamera() {
       const camBox = document.getElementById('camBox');
       const camBtnText = document.getElementById('camBtnText');
@@ -240,62 +218,52 @@
       if (isCamActive) {
         isCamActive = false;
         camBox.style.display = 'none';
-        camBtnText.innerText = 'Face Scan';
+        camBtnText.innerText = 'Scan Face';
         if (faceDetectionInterval) clearInterval(faceDetectionInterval);
-        document.getElementById('currentMood').innerText = 'Scanning Off 😴';
+        document.getElementById('currentMood').innerText = 'Scanning Off';
         return;
       }
 
-      informUser("Initializing Camera & Face AI...");
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         const video = document.getElementById('webcam');
         video.srcObject = stream;
         camBox.style.display = 'block';
         isCamActive = true;
         camBtnText.innerText = 'Stop Scan';
 
-        // Load detection models
         await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
         await faceapi.nets.faceExpressionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
 
-        informUser("Live Face Analytics Active!");
-
         faceDetectionInterval = setInterval(async () => {
           if (!isCamActive) return;
-          const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 })).withFaceExpressions();
-          
-          if (detections && detections.expressions) {
-            const expressions = detections.expressions;
-            let topExpression = "neutral";
-            let maxScore = 0;
-
-            for (const [expr, score] of Object.entries(expressions)) {
-              if (score > maxScore) {
-                maxScore = score;
-                topExpression = expr;
+          try {
+            const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+            if (detections && detections.expressions) {
+              let topExpr = "neutral";
+              let maxScore = 0;
+              for (const [expr, score] of Object.entries(detections.expressions)) {
+                if (score > maxScore) { maxScore = score; topExpr = expr; }
               }
+              detectedMood = topExpr;
+              document.getElementById('currentMood').innerText = topExpr.toUpperCase();
             }
-
-            detectedMood = topExpression;
-            const emojiMap = { happy: "😊", sad: "😢", angry: "😡", surprised: "😲", neutral: "😐", fearful: "😨", disgusted: "🤢" };
-            document.getElementById('currentMood').innerText = `${topExpression.toUpperCase()} ${emojiMap[topExpression] || '😊'}`;
-          }
-        }, 1500);
+          } catch(e){}
+        }, 2000);
 
       } catch (err) {
-        informUser("Camera permission denied!");
+        informUser("Camera access denied!");
       }
     }
 
     function toggleVoiceInput() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return informUser("Voice input not supported on browser");
+      if (!SpeechRecognition) return informUser("Voice not supported on browser");
 
       const micBtn = document.getElementById('micBtn');
       const rec = new SpeechRecognition();
 
-      rec.onstart = () => { micBtn.classList.add('listening'); informUser("Listening to bestie..."); };
+      rec.onstart = () => { micBtn.classList.add('listening'); informUser("Listening..."); };
       rec.onresult = (e) => {
         document.getElementById('userInput').value = e.results[0][0].transcript;
         micBtn.classList.remove('listening');
@@ -306,20 +274,18 @@
       rec.start();
     }
 
-    function triggerCheckIn() {
-      const checkInMsg = `Hey bestie! 💕 Checking in on you! Here is your saved routine: "${storedRoutine}". Let me know what you're working on!`;
-      addAiMessage(checkInMsg);
-      speakOutLoud("Hey bestie! Checking in on your routine!");
-    }
-
     async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
       if (!text && !base64Image) return;
 
+      if (GROQ_API_KEY.includes("PASTE_YOUR_GROQ_API_KEY")) {
+        addErrorMessage("⚠️ Error: You forgot to replace PASTE_YOUR_GROQ_API_KEY_HERE with your real key in index.html!");
+        return;
+      }
+
       const chatBox = document.getElementById('chatBox');
       
-      // Render user message box
       const uDiv = document.createElement('div');
       uDiv.className = 'message user';
       
@@ -342,25 +308,15 @@
       clearImage();
       input.value = '';
 
-      // Command checking
       const lower = text.toLowerCase();
       if (lower.includes("open youtube")) { launchApp('youtube'); return; }
       if (lower.includes("open whatsapp")) { launchApp('whatsapp'); return; }
-      if (lower.includes("my routine is") || lower.includes("my schedule is")) {
-        storedRoutine = text;
-        localStorage.setItem('aura_routine', text);
-        const reply = "I saved your new routine, bestie! I'll hold you accountable! 💪";
-        addAiMessage(reply);
-        speakOutLoud(reply);
-        return;
-      }
 
-      // Show typing indicator
-      informUser("Aura processing...");
+      // Typing Indicator
       const tDiv = document.createElement('div');
       tDiv.className = 'message ai';
       tDiv.id = 'typing';
-      tDiv.innerText = "Aura is typing...";
+      tDiv.innerText = "Aura thinking...";
       chatBox.appendChild(tDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -368,34 +324,29 @@
         let payload = {};
 
         if (currentImg) {
-          // Multimodal Vision Call
           payload = {
             model: "llama-3.2-11b-vision-preview",
             messages: [
               {
                 role: "system",
-                content: "You are Aura, the user's caring, witty best friend. Talk casually, warmly with emojis. Describe or answer questions about the uploaded photo."
+                content: "You are Aura, an enthusiastic, empathetic best friend. Answer concisely with emojis!"
               },
               {
                 role: "user",
                 content: [
-                  { type: "text", text: text || "What do you see in this photo, bestie?" },
+                  { type: "text", text: text || "What's in this image bestie?" },
                   { type: "image_url", image_url: { url: currentImg } }
                 ]
               }
             ]
           };
         } else {
-          // Conversational Text Call
           payload = {
             model: "llama-3.3-70b-versatile",
             messages: [
               {
                 role: "system",
-                content: `You are Aura, the user's supportive best friend. Speak naturally, warmly with emojis!
-Current detected user mood: "${detectedMood}".
-Saved routine: "${storedRoutine}".
-Keep responses concise (1-3 sentences max).`
+                content: `You are Aura, the user's best friend. Warm, funny, supportive! User expression: ${detectedMood}. Keep answers under 3 sentences.`
               },
               { role: "user", content: text }
             ]
@@ -412,20 +363,20 @@ Keep responses concise (1-3 sentences max).`
         });
 
         const data = await response.json();
-        document.getElementById('typing').remove();
+        if (document.getElementById('typing')) document.getElementById('typing').remove();
 
-        if (data.choices && data.choices[0]) {
+        if (response.ok && data.choices && data.choices[0]) {
           const aiReply = data.choices[0].message.content;
           addAiMessage(aiReply);
           speakOutLoud(aiReply);
-          informUser("Aura replied!");
         } else {
-          addAiMessage("API Key error! Please check your Groq Key in index.html");
+          const errMsg = data.error ? data.error.message : "API Failed to reply";
+          addErrorMessage("API Error: " + errMsg);
         }
 
       } catch (err) {
         if (document.getElementById('typing')) document.getElementById('typing').remove();
-        addAiMessage("Network error! Double check your Groq API key!");
+        addErrorMessage("Network connection error! Please verify your internet or API Key.");
       }
     }
 
@@ -433,12 +384,21 @@ Keep responses concise (1-3 sentences max).`
       const chatBox = document.getElementById('chatBox');
       const aiDiv = document.createElement('div');
       aiDiv.className = 'message ai';
-      aiDiv.innerHTML = text;
+      aiDiv.innerText = text;
       chatBox.appendChild(aiDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // 3D Visual Sphere Background
+    function addErrorMessage(text) {
+      const chatBox = document.getElementById('chatBox');
+      const errDiv = document.createElement('div');
+      errDiv.className = 'message error';
+      errDiv.innerText = text;
+      chatBox.appendChild(errDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // 3D Visual Mesh
     const canvas = document.getElementById('bg3d');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -471,6 +431,9 @@ Keep responses concise (1-3 sentences max).`
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updatePriority ? camera.updatePriority() : null;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
