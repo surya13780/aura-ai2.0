@@ -3,122 +3,182 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Aura • Your AI Best Friend</title>
+  <title>Aura • Advanced Vision & Bestie AI</title>
   
+  <!-- Fonts & FontAwesome -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+  <!-- 3D Engine & Face Detector -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-    body { background-color: #0b0b18; color: #ffffff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    body { background-color: #080811; color: #ffffff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    
     #bg3d { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; }
-    .app-container { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; width: 100%; padding: 12px; }
+    .app-container { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; max-width: 850px; margin: 0 auto; width: 100%; padding: 12px; }
 
+    /* Modern Glass Header */
     .header {
-      background: rgba(22, 22, 45, 0.7); backdrop-filter: blur(16px);
+      background: rgba(18, 18, 38, 0.75); backdrop-filter: blur(20px);
       padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; margin-bottom: 8px;
-      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; margin-bottom: 8px;
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.25);
     }
     .brand-title {
-      font-size: 1.1rem; font-weight: 800;
+      font-size: 1.15rem; font-weight: 800;
       background: linear-gradient(135deg, #a855f7, #ec4899);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       display: flex; align-items: center; gap: 8px;
     }
     .status-badge {
       background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7;
-      color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+      color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
     }
+    
+    .action-group { display: flex; gap: 8px; align-items: center; }
     .btn-action {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      border: none; color: #fff; padding: 6px 14px; border-radius: 16px;
-      font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.3s;
+      border: none; color: #fff; padding: 7px 14px; border-radius: 16px;
+      font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* Live Face Scan Floating Container */
+    .cam-preview-box {
+      position: absolute; top: 75px; right: 16px; width: 130px; height: 100px;
+      border-radius: 16px; overflow: hidden; border: 2px solid #a855f7;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6); display: none; z-index: 20; background: #000;
+    }
+    .cam-preview-box video { width: 100%; height: 100%; object-fit: cover; }
+    .cam-preview-box .cam-label {
+      position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7);
+      font-size: 0.6rem; text-align: center; padding: 2px 0; color: #a855f7; font-weight: 700;
     }
 
+    /* Toast Banner */
     .toast-banner {
       position: absolute; top: 75px; left: 50%; transform: translateX(-50%);
-      background: rgba(168, 85, 247, 0.3); border: 1px solid #a855f7;
+      background: rgba(168, 85, 247, 0.35); border: 1px solid #a855f7;
       backdrop-filter: blur(12px); color: #fff; padding: 8px 20px; border-radius: 30px;
       font-size: 0.8rem; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.3s ease; z-index: 10;
     }
     .toast-banner.show { opacity: 1; transform: translateX(-50%) translateY(5px); }
 
+    /* Chat Messages Display */
     .chat-container { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
     .message { max-width: 82%; padding: 14px 18px; border-radius: 20px; font-size: 0.93rem; line-height: 1.5; word-wrap: break-word; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .message.ai {
-      background: rgba(30, 30, 60, 0.75); backdrop-filter: blur(12px);
+      background: rgba(28, 28, 56, 0.8); backdrop-filter: blur(14px);
       align-self: flex-start; border-bottom-left-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.1); color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.12); color: #fff;
     }
     .message.user {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
       align-self: flex-end; border-bottom-right-radius: 4px;
-      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.3);
+      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35);
+    }
+    .message-img { max-width: 100%; max-height: 200px; border-radius: 12px; margin-bottom: 8px; display: block; border: 1px solid rgba(255,255,255,0.2); }
+
+    /* Quick Launch Bar */
+    .quick-launch { display: flex; gap: 8px; margin-bottom: 8px; justify-content: center; }
+    .chip-btn {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: #e2e8f0; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .chip-btn:hover { background: rgba(168, 85, 247, 0.3); border-color: #a855f7; }
+
+    /* Input Bar & Controls */
+    .input-container {
+      background: rgba(22, 22, 45, 0.8); backdrop-filter: blur(18px);
+      padding: 10px 16px; display: flex; gap: 8px; align-items: center;
+      border-radius: 28px; border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .input-container input[type="text"] {
+      flex: 1; background: rgba(12, 12, 26, 0.85); border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px 18px; border-radius: 30px; color: #fff; font-size: 0.9rem; outline: none;
     }
 
-    .input-container {
-      background: rgba(22, 22, 45, 0.7); backdrop-filter: blur(16px);
-      padding: 10px 16px; display: flex; gap: 8px; align-items: center;
-      border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .input-container input {
-      flex: 1; background: rgba(15, 15, 30, 0.8); border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 12px 18px; border-radius: 30px; color: #fff; font-size: 0.9rem; outline: none;
+    .image-preview-badge {
+      display: none; align-items: center; gap: 6px; background: rgba(168,85,247,0.3);
+      padding: 4px 10px; border-radius: 14px; font-size: 0.75rem; border: 1px solid #a855f7;
     }
 
     .control-btn {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
       color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s;
     }
+    .control-btn:hover { transform: scale(1.05); }
     .control-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-    #webcam { display: none; }
+    #imageInput { display: none; }
   </style>
 </head>
 <body>
 
   <canvas id="bg3d"></canvas>
-  <video id="webcam" autoplay muted playsinline width="320" height="240"></video>
+
+  <div class="cam-preview-box" id="camBox">
+    <video id="webcam" autoplay muted playsinline></video>
+    <div class="cam-label">LIVE MOOD AI</div>
+  </div>
 
   <div class="app-container">
-    <div class="toast-banner" id="toast"><i class="fa-solid fa-sparkles"></i> <span id="toastMsg">Aura Connected</span></div>
+    <div class="toast-banner" id="toast"><i class="fa-solid fa-sparkles"></i> <span id="toastMsg">Aura Advanced Ready</span></div>
 
     <div class="header">
-      <div class="brand-title">✨ Aura • Bestie AI</div>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <button class="btn-action" onclick="startCamera()"><i class="fa-solid fa-camera"></i> Scan Mood</button>
-        <div class="status-badge" id="currentMood">Happy 😊</div>
+      <div class="brand-title">✨ Aura • Vision & Bestie AI</div>
+      <div class="action-group">
+        <button class="btn-action" onclick="toggleCamera()"><i class="fa-solid fa-video"></i> <span id="camBtnText">Face Scan</span></button>
+        <div class="status-badge" id="currentMood">Scanning Off 😴</div>
       </div>
     </div>
 
     <div class="chat-container" id="chatBox">
       <div class="message ai">
-        Hey bestie! 💕 I'm right here with you! Tell me what you need to do today, ask me to open YouTube or WhatsApp, or tell me when to wake you up!
+        Hey bestie! 💕 I'm upgraded! You can now <b>upload photos 📸</b> for me to look at, speak to me with your voice, or launch YouTube & WhatsApp below!
       </div>
     </div>
 
+    <div class="quick-launch">
+      <button class="chip-btn" onclick="launchApp('youtube')"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Open YouTube</button>
+      <button class="chip-btn" onclick="launchApp('whatsapp')"><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> Open WhatsApp</button>
+      <button class="chip-btn" onclick="triggerCheckIn()"><i class="fa-solid fa-bell"></i> Check Schedule</button>
+    </div>
+
     <div class="input-container">
+      <div class="image-preview-badge" id="imgBadge">
+        <i class="fa-solid fa-image"></i> Image Attached
+        <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="clearImage()"></i>
+      </div>
+      
+      <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)" />
+      <button class="control-btn" style="background: rgba(255,255,255,0.15);" onclick="document.getElementById('imageInput').click()">
+        <i class="fa-solid fa-paperclip"></i>
+      </button>
+
       <button class="control-btn" id="micBtn" onclick="toggleVoiceInput()"><i class="fa-solid fa-microphone"></i></button>
-      <input type="text" id="userInput" placeholder="Talk to your bestie..." onkeypress="if(event.key==='Enter') sendMessage()" />
+      
+      <input type="text" id="userInput" placeholder="Talk or ask about an image..." onkeypress="if(event.key==='Enter') sendMessage()" />
       <button class="control-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
   </div>
 
   <script>
     // 🔑 PASTE YOUR FREE GROQ API KEY HERE:
-    const GROQ_API_KEY = "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";
+    const GROQ_API_KEY = "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";
 
-    let detectedMood = "happy";
-    let storedRoutine = localStorage.getItem('aura_routine') || "No schedule added yet.";
-    let checkInInterval = null;
+    let detectedMood = "neutral";
+    let storedRoutine = localStorage.getItem('aura_routine') || "No schedule set yet.";
+    let base64Image = null;
+    let isCamActive = false;
+    let faceDetectionInterval = null;
 
     function informUser(msg) {
       const toast = document.getElementById('toast');
@@ -137,61 +197,105 @@
       }
     }
 
-    // Direct Action Parser (Open YouTube, WhatsApp, Alarms, Schedule)
-    function parseBestieActions(text) {
-      const lower = text.toLowerCase();
-
-      // YouTube Opener Fix
-      if (lower.includes("open youtube") || lower.includes("launch youtube")) {
-        informUser("Redirecting to YouTube...");
-        speakOutLoud("Opening YouTube for you right now, bestie!");
-        setTimeout(() => {
-          window.location.href = "https://www.youtube.com";
-        }, 1200);
-        return "Opening YouTube for you right now! Enjoy! 🎬";
+    // Direct Launcher Fix for YouTube / WhatsApp
+    function launchApp(appName) {
+      if (appName === 'youtube') {
+        informUser("Opening YouTube...");
+        speakOutLoud("Opening YouTube for you, bestie!");
+        const win = window.open("https://www.youtube.com", "_blank");
+        if (!win) window.location.href = "https://www.youtube.com";
+      } else if (appName === 'whatsapp') {
+        informUser("Opening WhatsApp...");
+        speakOutLoud("Opening WhatsApp Web!");
+        const win = window.open("https://web.whatsapp.com", "_blank");
+        if (!win) window.location.href = "https://web.whatsapp.com";
       }
-
-      // WhatsApp Opener
-      if (lower.includes("open whatsapp") || lower.includes("launch whatsapp")) {
-        informUser("Redirecting to WhatsApp...");
-        speakOutLoud("Opening WhatsApp Web for you!");
-        setTimeout(() => {
-          window.location.href = "https://web.whatsapp.com";
-        }, 1200);
-        return "Redirecting you to WhatsApp Web! 💬";
-      }
-
-      // Save Routine
-      if (lower.includes("my routine is") || lower.includes("my schedule is")) {
-        storedRoutine = text;
-        localStorage.setItem('aura_routine', text);
-        return "Got it, bestie! I saved your schedule. I'll check in on you from time to time to make sure you stick to it! 💪";
-      }
-
-      return null;
     }
 
-    // Automatic Check-in Routine (Runs every 20 minutes)
-    function startPeriodicCheckIns() {
-      if (checkInInterval) clearInterval(checkInInterval);
+    // Image Upload Handling
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        base64Image = evt.target.result;
+        document.getElementById('imgBadge').style.display = 'flex';
+        informUser("Image attached! Type a question about it.");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      base64Image = null;
+      document.getElementById('imageInput').value = '';
+      document.getElementById('imgBadge').style.display = 'none';
+    }
+
+    // Advanced Face Detection Engine
+    async function toggleCamera() {
+      const camBox = document.getElementById('camBox');
+      const camBtnText = document.getElementById('camBtnText');
       
-      // Check in every 20 minutes (1,200,000 ms)
-      checkInInterval = setInterval(() => {
-        const checkInMsg = `Hey bestie! 💕 Just checking in on you! How are you doing with your routine? Remember your schedule: "${storedRoutine}". Let me know if you need anything!`;
-        addAiMessage(checkInMsg);
-        speakOutLoud("Hey bestie! Just checking in on you! How's your routine going?");
-        informUser("✨ Time-to-time Bestie Check-in");
-      }, 1200000);
+      if (isCamActive) {
+        isCamActive = false;
+        camBox.style.display = 'none';
+        camBtnText.innerText = 'Face Scan';
+        if (faceDetectionInterval) clearInterval(faceDetectionInterval);
+        document.getElementById('currentMood').innerText = 'Scanning Off 😴';
+        return;
+      }
+
+      informUser("Initializing Camera & Face AI...");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+        camBox.style.display = 'block';
+        isCamActive = true;
+        camBtnText.innerText = 'Stop Scan';
+
+        // Load detection models
+        await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
+        await faceapi.nets.faceExpressionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
+
+        informUser("Live Face Analytics Active!");
+
+        faceDetectionInterval = setInterval(async () => {
+          if (!isCamActive) return;
+          const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 })).withFaceExpressions();
+          
+          if (detections && detections.expressions) {
+            const expressions = detections.expressions;
+            let topExpression = "neutral";
+            let maxScore = 0;
+
+            for (const [expr, score] of Object.entries(expressions)) {
+              if (score > maxScore) {
+                maxScore = score;
+                topExpression = expr;
+              }
+            }
+
+            detectedMood = topExpression;
+            const emojiMap = { happy: "😊", sad: "😢", angry: "😡", surprised: "😲", neutral: "😐", fearful: "😨", disgusted: "🤢" };
+            document.getElementById('currentMood').innerText = `${topExpression.toUpperCase()} ${emojiMap[topExpression] || '😊'}`;
+          }
+        }, 1500);
+
+      } catch (err) {
+        informUser("Camera permission denied!");
+      }
     }
 
     function toggleVoiceInput() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return informUser("Voice recognition unavailable");
+      if (!SpeechRecognition) return informUser("Voice input not supported on browser");
 
       const micBtn = document.getElementById('micBtn');
       const rec = new SpeechRecognition();
 
-      rec.onstart = () => { micBtn.classList.add('listening'); informUser("Aura Listening..."); };
+      rec.onstart = () => { micBtn.classList.add('listening'); informUser("Listening to bestie..."); };
       rec.onresult = (e) => {
         document.getElementById('userInput').value = e.results[0][0].transcript;
         micBtn.classList.remove('listening');
@@ -202,50 +306,57 @@
       rec.start();
     }
 
-    async function startCamera() {
-      informUser("Scanning face & mood...");
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-        const video = document.getElementById('webcam');
-        video.srcObject = stream;
-        
-        await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
-        await faceapi.nets.faceExpressionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model');
-
-        informUser("Biometrics Active!");
-        setInterval(async () => {
-          const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
-          if (detections && detections.expressions) {
-            let highest = "happy";
-            let maxProb = 0;
-            for (const [expr, prob] of Object.entries(detections.expressions)) {
-              if (prob > maxProb) { maxProb = prob; highest = expr; }
-            }
-            detectedMood = highest;
-            document.getElementById('currentMood').innerText = highest.toUpperCase() + " 😊";
-          }
-        }, 3000);
-
-      } catch (err) { informUser("Camera Access Denied"); }
+    function triggerCheckIn() {
+      const checkInMsg = `Hey bestie! 💕 Checking in on you! Here is your saved routine: "${storedRoutine}". Let me know what you're working on!`;
+      addAiMessage(checkInMsg);
+      speakOutLoud("Hey bestie! Checking in on your routine!");
     }
 
     async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && !base64Image) return;
 
       const chatBox = document.getElementById('chatBox');
       
+      // Render user message box
       const uDiv = document.createElement('div');
       uDiv.className = 'message user';
-      uDiv.innerText = text;
+      
+      if (base64Image) {
+        const imgEl = document.createElement('img');
+        imgEl.src = base64Image;
+        imgEl.className = 'message-img';
+        uDiv.appendChild(imgEl);
+      }
+      
+      if (text) {
+        const txtEl = document.createElement('span');
+        txtEl.innerText = text;
+        uDiv.appendChild(txtEl);
+      }
+      
       chatBox.appendChild(uDiv);
+
+      const currentImg = base64Image;
+      clearImage();
       input.value = '';
 
-      // Check actions
-      const actionReply = parseBestieActions(text);
+      // Command checking
+      const lower = text.toLowerCase();
+      if (lower.includes("open youtube")) { launchApp('youtube'); return; }
+      if (lower.includes("open whatsapp")) { launchApp('whatsapp'); return; }
+      if (lower.includes("my routine is") || lower.includes("my schedule is")) {
+        storedRoutine = text;
+        localStorage.setItem('aura_routine', text);
+        const reply = "I saved your new routine, bestie! I'll hold you accountable! 💪";
+        addAiMessage(reply);
+        speakOutLoud(reply);
+        return;
+      }
 
-      informUser("Aura thinking...");
+      // Show typing indicator
+      informUser("Aura processing...");
       const tDiv = document.createElement('div');
       tDiv.className = 'message ai';
       tDiv.id = 'typing';
@@ -253,20 +364,43 @@
       chatBox.appendChild(tDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      if (actionReply) {
-        setTimeout(() => {
-          document.getElementById('typing').remove();
-          addAiMessage(actionReply);
-          speakOutLoud(actionReply);
-        }, 500);
-        return;
-      }
-
       try {
-        const systemInstruction = `You are Aura, the user's ultimate best friend. Speak warmly, energetic, using emojis!
-User's Face Mood: "${detectedMood}".
-User's Saved Schedule: "${storedRoutine}".
-Give a short 1-2 sentence response. If they ask about getting up, hydration, or their schedule, cheer them on and give them affection and high energy!`;
+        let payload = {};
+
+        if (currentImg) {
+          // Multimodal Vision Call
+          payload = {
+            model: "llama-3.2-11b-vision-preview",
+            messages: [
+              {
+                role: "system",
+                content: "You are Aura, the user's caring, witty best friend. Talk casually, warmly with emojis. Describe or answer questions about the uploaded photo."
+              },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: text || "What do you see in this photo, bestie?" },
+                  { type: "image_url", image_url: { url: currentImg } }
+                ]
+              }
+            ]
+          };
+        } else {
+          // Conversational Text Call
+          payload = {
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              {
+                role: "system",
+                content: `You are Aura, the user's supportive best friend. Speak naturally, warmly with emojis!
+Current detected user mood: "${detectedMood}".
+Saved routine: "${storedRoutine}".
+Keep responses concise (1-3 sentences max).`
+              },
+              { role: "user", content: text }
+            ]
+          };
+        }
 
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
@@ -274,13 +408,7 @@ Give a short 1-2 sentence response. If they ask about getting up, hydration, or 
             "Authorization": `Bearer ${GROQ_API_KEY}`,
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            messages: [
-              { role: "system", content: systemInstruction },
-              { role: "user", content: text }
-            ]
-          })
+          body: JSON.stringify(payload)
         });
 
         const data = await response.json();
@@ -292,12 +420,12 @@ Give a short 1-2 sentence response. If they ask about getting up, hydration, or 
           speakOutLoud(aiReply);
           informUser("Aura replied!");
         } else {
-          addAiMessage("Check your Groq API key in index.html!");
+          addAiMessage("API Key error! Please check your Groq Key in index.html");
         }
 
       } catch (err) {
-        document.getElementById('typing').remove();
-        addAiMessage("Connection error! Double check your Groq API key!");
+        if (document.getElementById('typing')) document.getElementById('typing').remove();
+        addAiMessage("Network error! Double check your Groq API key!");
       }
     }
 
@@ -305,15 +433,12 @@ Give a short 1-2 sentence response. If they ask about getting up, hydration, or 
       const chatBox = document.getElementById('chatBox');
       const aiDiv = document.createElement('div');
       aiDiv.className = 'message ai';
-      aiDiv.innerText = text;
+      aiDiv.innerHTML = text;
       chatBox.appendChild(aiDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Start time-to-time check-ins when page loads
-    startPeriodicCheckIns();
-
-    // 3D Scene Background
+    // 3D Visual Sphere Background
     const canvas = document.getElementById('bg3d');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -346,9 +471,6 @@ Give a short 1-2 sentence response. If they ask about getting up, hydration, or 
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updatePriority ? camera.updatePriority() : null;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
-</body>
-</html>
