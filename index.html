@@ -75,7 +75,7 @@
       background: rgba(239, 68, 68, 0.25); border: 1px solid #ef4444; color: #fca5a5;
       align-self: center; font-size: 0.8rem; max-width: 90%;
     }
-    .message-img { max-width: 100%; max-height: 180px; border-radius: 12px; margin-bottom: 8px; display: block; }
+    .message-img { max-width: 100%; max-height: 220px; border-radius: 12px; margin-bottom: 8px; display: block; object-fit: contain; }
 
     .quick-launch { display: flex; gap: 8px; margin-bottom: 8px; justify-content: center; }
     .chip-btn {
@@ -102,7 +102,7 @@
     .control-btn {
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
       color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s; flex-shrink: 0;
     }
     .control-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
@@ -131,7 +131,7 @@
 
     <div class="chat-container" id="chatBox">
       <div class="message ai">
-        Hey bestie! 💕 Ready to chat! Upload photos 📸, talk via mic 🎙️, or ask me to solve math problems!
+        Hey bestie! 💕 I'm ready! Upload any math photo 📸, talk via mic 🎙️, or send me any question!
       </div>
     </div>
 
@@ -142,7 +142,7 @@
 
     <div class="input-container">
       <div class="image-preview-badge" id="imgBadge">
-        <i class="fa-solid fa-image"></i> Photo Ready
+        <i class="fa-solid fa-image"></i> Photo
         <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="clearImage()"></i>
       </div>
       
@@ -164,6 +164,7 @@
 
     let detectedMood = "neutral";
     let base64Image = null;
+    let base64Mime = "image/jpeg";
     let isCamActive = false;
     let faceDetectionInterval = null;
 
@@ -177,7 +178,8 @@
     function speakOutLoud(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
+        const cleanText = text.replace(/[*#_~`]/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.rate = 1.0;
         utterance.pitch = 1.15;
         window.speechSynthesis.speak(utterance);
@@ -196,6 +198,7 @@
       const file = e.target.files[0];
       if (!file) return;
 
+      base64Mime = file.type || "image/jpeg";
       const reader = new FileReader();
       reader.onload = function(evt) {
         base64Image = evt.target.result;
@@ -258,7 +261,7 @@
 
     function toggleVoiceInput() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return informUser("Use Chrome on Android for Voice!");
+      if (!SpeechRecognition) return informUser("Use Google Chrome for Voice");
 
       const micBtn = document.getElementById('micBtn');
       const rec = new SpeechRecognition();
@@ -284,6 +287,7 @@
     async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
+      
       if (!text && !base64Image) return;
 
       const chatBox = document.getElementById('chatBox');
@@ -318,7 +322,7 @@
       const tDiv = document.createElement('div');
       tDiv.className = 'message ai';
       tDiv.id = 'typing';
-      tDiv.innerText = currentImg ? "Aura analyzing photo..." : "Aura thinking...";
+      tDiv.innerText = currentImg ? "Aura reading image & solving..." : "Aura thinking...";
       chatBox.appendChild(tDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -328,7 +332,7 @@
         if (text) {
           userContent.push({ type: "text", text: text });
         } else {
-          userContent.push({ type: "text", text: "Please analyze and solve this image clearly step-by-step." });
+          userContent.push({ type: "text", text: "Please read, analyze, and solve the problem in this image clearly step-by-step." });
         }
 
         if (currentImg) {
@@ -349,7 +353,7 @@
             messages: [
               {
                 role: "system",
-                content: `You are Aura, an enthusiastic, warm, witty best friend AI. User mood: ${detectedMood}. Solve math problems clearly step-by-step with formulas and clear final answers!`
+                content: `You are Aura, a witty, brilliant best friend AI and expert tutor. User mood: ${detectedMood}. Solve any handwritten or printed math problems with clear formulas, step-by-step calculations, and a highlighted final answer!`
               },
               {
                 role: "user",
@@ -362,7 +366,7 @@
         const data = await response.json();
         if (document.getElementById('typing')) document.getElementById('typing').remove();
 
-        if (response.ok && data.choices && data.choices[0].message.content) {
+        if (response.ok && data.choices && data.choices[0] && data.choices[0].message) {
           const aiReply = data.choices[0].message.content;
           addAiMessage(aiReply);
           speakOutLoud(aiReply);
@@ -373,7 +377,7 @@
 
       } catch (err) {
         if (document.getElementById('typing')) document.getElementById('typing').remove();
-        addErrorMessage("Network connection error! Please try again.");
+        addErrorMessage("Network connection error! Please check your internet connection.");
       }
     }
 
