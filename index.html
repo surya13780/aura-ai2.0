@@ -160,7 +160,7 @@
 
   <script>
     // 🔑 REPLACE WITH YOUR ACTUAL GROQ API KEY:
-    const GROQ_API_KEY = "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";
+    const GROQ_API_KEY = "AQ.Ab8RN6JIgPm8uxQCvq7FnXDi_-F_vORK0VoLEiq3Xu_L2VuNrQ";
 
     let detectedMood = "neutral";
     let base64Image = null;
@@ -279,7 +279,7 @@
       const text = input.value.trim();
       if (!text && !base64Image) return;
 
-      if (GROQ_API_KEY.includes("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")) {
+      if (GROQ_API_KEY.includes("AQ.Ab8RN6JIgPm8uxQCvq7FnXDi_-F_vORK0VoLEiq3Xu_L2VuNrQ")) {
         addErrorMessage("⚠️ Error: You forgot to replace PASTE_YOUR_GROQ_API_KEY_HERE with your real key in index.html!");
         return;
       }
