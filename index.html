@@ -234,19 +234,33 @@
       rec.onend = () => micBtn.classList.remove('listening');
       rec.start();
     }
-
-    async function sendMessage() {
+async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && !base64Image) return;
 
       const chatBox = document.getElementById('chatBox');
       
       const uDiv = document.createElement('div');
       uDiv.className = 'message user';
-      uDiv.innerText = text;
+      
+      if (base64Image) {
+        const imgEl = document.createElement('img');
+        imgEl.src = base64Image;
+        imgEl.className = 'message-img';
+        uDiv.appendChild(imgEl);
+      }
+      
+      if (text) {
+        const txtEl = document.createElement('span');
+        txtEl.innerText = text;
+        uDiv.appendChild(txtEl);
+      }
+      
       chatBox.appendChild(uDiv);
 
+      const currentImg = base64Image;
+      clearImage();
       input.value = '';
 
       const lower = text.toLowerCase();
@@ -257,11 +271,27 @@
       const tDiv = document.createElement('div');
       tDiv.className = 'message ai';
       tDiv.id = 'typing';
-      tDiv.innerText = "Aura thinking...";
+      tDiv.innerText = "Aura reading image...";
       chatBox.appendChild(tDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
+        // Construct multimodal user content
+        const userContent = [];
+        
+        if (text) {
+          userContent.push({ type: "text", text: text });
+        } else {
+          userContent.push({ type: "text", text: "Please analyze and solve this image." });
+        }
+
+        if (currentImg) {
+          userContent.push({
+            type: "image_url",
+            image_url: { url: currentImg }
+          });
+        }
+
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -269,15 +299,15 @@
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: "llama-3.2-11b-vision-preview",
             messages: [
               {
                 role: "system",
-                content: `You are Aura, an enthusiastic, warm, witty best friend AI. User mood: ${detectedMood}. Keep answers short, fun, and concise with emojis!`
+                content: `You are Aura, a friendly, smart assistant. User mood: ${detectedMood}. Solve math problems clearly step-by-step!`
               },
               {
                 role: "user",
-                content: text
+                content: userContent
               }
             ]
           })
@@ -297,7 +327,7 @@
 
       } catch (err) {
         if (document.getElementById('typing')) document.getElementById('typing').remove();
-        addErrorMessage("Network connection error! Check your internet connection.");
+        addErrorMessage("Network error! Please try sending again.");
       }
     }
 
